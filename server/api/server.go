@@ -7,8 +7,7 @@ import (
 
 // Server web server
 type Server struct {
-	Mux        *http.ServeMux
-	HTTPServer *http.Server
+	Mux *http.ServeMux
 }
 
 func NewServer() *Server {

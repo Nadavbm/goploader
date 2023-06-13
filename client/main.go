@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
@@ -13,23 +12,12 @@ import (
 	"path/filepath"
 )
 
-type Client struct {
-	client *http.Client
-}
-
 func main() {
-	// prepare file for upload post request
-	fileDir, err := os.Getwd()
-	if err != nil {
-		log.Printf("error get directory %s", err)
-	}
-	fileName := "file.txt"
-	filePath := path.Join(fileDir, fileName)
-	log.Printf("open file %s", filePath)
+	c := newClient("file.txt", "http://localhost:8080/upload")
 
-	file, err := os.Open(filePath)
+	file, err := c.getFile()
 	if err != nil {
-		log.Printf("error open file %s", err)
+		panic(err)
 	}
 	defer file.Close()
 
@@ -40,7 +28,6 @@ func main() {
 	if err != nil {
 		log.Printf("error create form file %s", err)
 	}
-	log.Printf("create form file part %s", part)
 
 	if _, err := io.Copy(part, bytes.NewReader(buf)); err != nil {
 		log.Printf("error copy file content %s", err)
@@ -49,25 +36,51 @@ func main() {
 		log.Printf("error closing writer %s", err)
 	}
 
-	fmt.Printf("part and buf %s %s", part, string(buf))
+	if err := c.postFormDataContentRequest(writer, body); err != nil {
+		panic(err)
+	}
+}
 
-	// create api request
-	target_url := "http://localhost:8080/upload"
-	req, err := http.NewRequest(http.MethodPost, target_url, body)
+type Client struct {
+	file      string
+	targetUrl string
+	client    *http.Client
+}
+
+func newClient(file, url string) *Client {
+	client := &http.Client{}
+	return &Client{
+		file:      file,
+		targetUrl: url,
+		client:    client,
+	}
+}
+
+func (c *Client) getFile() (*os.File, error) {
+	fileDir, err := os.Getwd()
 	if err != nil {
-		log.Println("failed to create post request", err)
+		log.Printf("error get working directory %s", err)
+		return nil, err
 	}
 
-	// auth
-	c := Client{}
-	c.client = &http.Client{}
+	return os.Open(path.Join(fileDir, c.file))
+}
+
+func (c *Client) postFormDataContentRequest(writer *multipart.Writer, body io.Reader) error {
+	// create api request
+	req, err := http.NewRequest(http.MethodPost, c.targetUrl, body)
+	if err != nil {
+		log.Println("failed to create post request", err)
+		return err
+	}
 
 	// content type
 	req.Header.Add("Content-Type", writer.FormDataContentType())
 
 	resp, err := c.client.Do(req)
 	if err != nil {
-		fmt.Println("error1", err)
+		log.Println("failed to send http request", err)
+		return err
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
@@ -80,4 +93,5 @@ func main() {
 		log.Fatal("the error", err)
 	}
 	log.Printf("\ncontent: %s\nstatus: %d", string(content), resp.StatusCode)
+	return nil
 }

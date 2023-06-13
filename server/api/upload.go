@@ -10,7 +10,6 @@ import (
 )
 
 func uploadHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Println(fmt.Sprintf("upload handler hit %v", r))
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
