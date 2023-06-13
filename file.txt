@@ -1,0 +1,9 @@
+test file to upload to server
+
+check in the server dir that file are being created by timestamp
+
+and verify content
+
+TODO:
+
+add timestamp to content
