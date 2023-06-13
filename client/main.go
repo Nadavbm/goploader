@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
@@ -9,7 +10,6 @@ import (
 	"net/http"
 	"os"
 	"path"
-	"path/filepath"
 )
 
 func main() {
@@ -21,22 +21,21 @@ func main() {
 	}
 	defer file.Close()
 
-	buf := make([]byte, 1024)
-	body := &bytes.Buffer{}
-	writer := multipart.NewWriter(body)
-	part, err := writer.CreateFormFile("file", filepath.Base(file.Name()))
+	bodyBuf := &bytes.Buffer{}
+	bodyWriter := multipart.NewWriter(bodyBuf)
+	fileWriter, err := bodyWriter.CreateFormFile("file", c.file)
 	if err != nil {
-		log.Printf("error create form file %s", err)
+		fmt.Println("error writing to buffer")
 	}
 
-	if _, err := io.Copy(part, bytes.NewReader(buf)); err != nil {
+	if _, err := io.Copy(fileWriter, file); err != nil {
 		log.Printf("error copy file content %s", err)
 	}
-	if err := writer.Close(); err != nil {
+	if err := bodyWriter.Close(); err != nil {
 		log.Printf("error closing writer %s", err)
 	}
-
-	if err := c.postFormDataContentRequest(writer, body); err != nil {
+	fmt.Println("body", string(bodyBuf.Bytes()))
+	if err := c.postFormDataContentRequest(bodyWriter, bodyBuf); err != nil {
 		panic(err)
 	}
 }
