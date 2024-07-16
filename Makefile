@@ -1,4 +1,4 @@
-all: test build serve run
+all: test build serve run close
 .PHONY: test
 test:
 	go test -v ./...
@@ -17,5 +17,9 @@ run:
 .PHONY: serve
 serve: 
 	screen -d -m -S devses
-	screen -dmS devses sh go run server/main.go
+	screen -dmS devses go run server/main.go
+	sleep 2
+
+.PHONE: close
+close: 
 	sh scripts/close-screens.sh
