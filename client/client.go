@@ -1,25 +1,27 @@
 package client
 
 import (
-	"fmt"
 	"io"
 	"log"
 	"mime/multipart"
 	"net/http"
 	"os"
 	"path"
+	"strings"
 )
 
+type Files []string
+
 type Client struct {
-	File      string
+	Files     Files
 	TargetUrl string
 	client    *http.Client
 }
 
-func NewClient(file, url string) *Client {
+func NewClient(url string, files Files) *Client {
 	client := &http.Client{}
 	return &Client{
-		File:      file,
+		Files:     files,
 		TargetUrl: url,
 		client:    client,
 	}
@@ -32,16 +34,25 @@ func (c *Client) GetFile() (*os.File, error) {
 		return nil, err
 	}
 
-	return os.Open(path.Join(fileDir, c.File))
+	return os.Open(path.Join(fileDir, c.Files[0]))
 }
 
-func (c *Client) PostFormDataContentRequest(writer *multipart.Writer, body io.Reader) error {
-	// create api request
-	fmt.Println("target url", c.TargetUrl)
-	req, err := http.NewRequest(http.MethodPost, c.TargetUrl, body)
-	if err != nil {
-		log.Println("failed to create post request", err)
-		return err
+func (c *Client) Send(method string, writer *multipart.Writer, body io.Reader) error {
+	var req *http.Request
+	var err error
+	switch {
+	case strings.ToUpper(method) == http.MethodPut:
+		req, err = http.NewRequest(http.MethodPost, c.TargetUrl, body)
+		if err != nil {
+			log.Println("failed to create post request", err)
+			return err
+		}
+	default:
+		req, err = http.NewRequest(http.MethodPost, c.TargetUrl, body)
+		if err != nil {
+			log.Println("failed to create post request", err)
+			return err
+		}
 	}
 
 	// content type

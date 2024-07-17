@@ -1,24 +1,12 @@
 package main
 
 import (
-	"bytes"
 	"flag"
-	"fmt"
-	"io"
 	"log"
-	"mime/multipart"
 	"os"
 
 	"github.com/nadavbm/goploader/client"
 )
-
-type Args struct {
-	dir    *string
-	file   *string
-	url    *string
-	method *string
-	form   *string
-}
 
 func main() {
 	log.Println("starting goploader")
@@ -33,43 +21,22 @@ func main() {
 	log.Println("file arg", *args.file)
 	log.Println("url arg", *args.url)
 	log.Println("method arg", *args.method)
-	log.Println("form arg", *args.form)
+	log.Println("content arg", *args.content)
 
-	c := client.NewClient(string(*args.file), string(*args.url))
-
-	file, err := c.GetFile()
+	c, err := setClient(args)
 	if err != nil {
 		panic(err)
 	}
-	defer file.Close()
 
-	bodyBuf := &bytes.Buffer{}
-	bodyWriter := multipart.NewWriter(bodyBuf)
-	fileWriter, err := bodyWriter.CreateFormFile("file", c.File)
-	if err != nil {
-		fmt.Println("error writing to buffer")
+	log.Println("all files", c.Files)
+	for i, f := range c.Files {
+		log.Println("processing file", i, f)
+		writer, buff, err := client.PrepareFormFile(f)
+		if err != nil {
+			log.Printf("failed to prepare file for multipart form %s", err)
+		}
+		if err := c.Send(string(*args.method), writer, buff); err != nil {
+			log.Printf("failed to send http request %s", err)
+		}
 	}
-
-	if _, err := io.Copy(fileWriter, file); err != nil {
-		log.Printf("error copy file content %s", err)
-	}
-	if err := bodyWriter.Close(); err != nil {
-		log.Printf("error closing writer %s", err)
-	}
-	fmt.Println("body", string(bodyBuf.Bytes()))
-	if err := c.PostFormDataContentRequest(bodyWriter, bodyBuf); err != nil {
-		panic(err)
-	}
-}
-
-func getArgs() Args {
-	args := Args{
-		dir:    flag.String("dir", "", "Go uploader files directory"),
-		file:   flag.String("file", "", "Go uploader file"),
-		url:    flag.String("url", "", "api server url for goploader"),
-		method: flag.String("method", "", "http request method"),
-		form:   flag.String("form", "", "request form type"),
-	}
-	flag.Parse()
-	return args
 }
