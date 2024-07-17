@@ -3,6 +3,7 @@ package api
 import (
 	"fmt"
 	"io"
+	"mime/multipart"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -12,11 +13,6 @@ import (
 const maxUploadSize = 512
 
 func uploadHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
 	r.Body = http.MaxBytesReader(w, r.Body, maxUploadSize)
 	if err := r.ParseMultipartForm(maxUploadSize); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -37,29 +33,33 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err = os.MkdirAll("./uploads", os.ModePerm); err != nil {
+	if err := saveFileToOsDir(buff, file, fileHeader); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+	}
+
+	fmt.Fprintf(w, "Upload successfully %s file", fileHeader.Filename)
+}
+
+func saveFileToOsDir(buff []byte, file multipart.File, fileHeader *multipart.FileHeader) error {
+	if err := os.MkdirAll("./uploads", os.ModePerm); err != nil {
+		return err
 	}
 
 	f, err := os.Create(fmt.Sprintf("./uploads/%d%s", time.Now().UnixNano(), filepath.Ext(fileHeader.Filename)))
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return err
 	}
 	defer f.Close()
 
 	_, err = f.Write(buff)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return err
 	}
 
 	_, err = io.Copy(f, file)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return err
 	}
 
-	fmt.Fprintf(w, "Upload successfully %s file", fileHeader.Filename)
+	return nil
 }

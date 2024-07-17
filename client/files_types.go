@@ -10,10 +10,12 @@ import (
 	"strings"
 )
 
+// allowedFileSuffixes are the allowed suffix to be sent with goploader
 var allowedFileSuffixes = []string{
 	".json", ".pdf", ".jpg", ".txt",
 }
 
+// PrepareFormFile to be sent later with closed multipart and data buffer
 func PrepareFormFile(filename string) (*multipart.Writer, *bytes.Buffer, error) {
 	bodyBuf := &bytes.Buffer{}
 	bodyWriter := multipart.NewWriter(bodyBuf)
@@ -42,6 +44,7 @@ func PrepareFormFile(filename string) (*multipart.Writer, *bytes.Buffer, error) 
 	return bodyWriter, bodyBuf, nil
 }
 
+// GetAllFilesInDirectory returns a slice of file names (full path)
 func GetAllFilesInDirectory(dir string) ([]string, error) {
 	var fileNames []string
 	entries, err := os.ReadDir(dir)
@@ -59,6 +62,7 @@ func GetAllFilesInDirectory(dir string) ([]string, error) {
 	return fileNames, nil
 }
 
+// getOsFile
 func getOsFile(file string) (*os.File, error) {
 	fileDir, err := os.Getwd()
 	if err != nil {
@@ -69,6 +73,7 @@ func getOsFile(file string) (*os.File, error) {
 	return os.Open(path.Join(fileDir, file))
 }
 
+// checkFileSuffix check if file has allowed suffix
 func checkFileSuffix(filename string) bool {
 	for _, s := range allowedFileSuffixes {
 		if strings.HasSuffix(filename, s) {
