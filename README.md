@@ -1,15 +1,21 @@
 # goploader
 
-this project use server and a client to upload a file from a client to server
+upload files with golang to http server
 
-test it by running server:
-
-```
-go run server/main.go
-```
-
-and client (in another terminal):
+test your changes by running Makefile:
 
 ```
-go run client/main.go
+make
+```
+
+### build
+
+```
+cd cli && go build -o goploader
+```
+
+### run
+
+```
+./goploader --file=example/files/testfile.json --url=http://localhost:8080/upload --method=post
 ```
