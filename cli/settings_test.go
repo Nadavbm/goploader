@@ -15,12 +15,12 @@ func TestSetClient(t *testing.T) {
 		t.Fatal("could not set client", err)
 	}
 
-	if client.Files[0] != "../example/files/testfile.json" {
-		t.Errorf("expected file name to be ../example/files/testfile.json instead got %s", client.Files[0])
+	if client.Files["../example/files/testfile.json"] != "application/json" {
+		t.Errorf("expected content type to be application/json instead got %s", client.Files["../example/files/testfile.json"])
 	}
 
-	if client.Files[1] != "../example/files/testfile2.json" {
-		t.Errorf("expected file name to be ../example/files/testfile2.json instead got %s", client.Files[1])
+	if client.Files["../example/files/testfile2.json"] != "application/json" {
+		t.Errorf("expected content type to be application/json instead got %s", client.Files["../example/files/testfile2.json"])
 	}
 
 	client = nil
@@ -30,7 +30,7 @@ func TestSetClient(t *testing.T) {
 	if err != nil {
 		t.Fatal("could not set client", err)
 	}
-	if client.Files[0] != "../example/files/testfile3.json" {
-		t.Errorf("expected file name to be ../example/files/testfile3.json instead got %s", client.Files[0])
+	if client.Files["../example/files/testfile3.json"] != "application/json" {
+		t.Errorf("expected content type to be application/json instead got %s", client.Files["../example/files/testfile3.json"])
 	}
 }

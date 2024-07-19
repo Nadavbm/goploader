@@ -17,7 +17,7 @@ type Args struct {
 
 // setClient create a client based on cli arguments
 func setClient(args Args) (*client.Client, error) {
-	var files []string
+	files := make(map[string]string)
 	var err error
 	if args.dir != nil {
 		if string(*args.dir) != "" {
@@ -30,7 +30,7 @@ func setClient(args Args) (*client.Client, error) {
 
 	if args.file != nil {
 		if string(*args.file) != "" {
-			files = append(files, string(*args.file))
+			files[string(*args.file)] = client.GetFileSuffixContentType(string(*args.file))
 		}
 	}
 

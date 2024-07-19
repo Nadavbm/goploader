@@ -11,8 +11,16 @@ import (
 )
 
 // allowedFileSuffixes are the allowed suffix to be sent with goploader
+// TODO: change this list to a map[string]string and define content length according to https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Common_types
 var allowedFileSuffixes = []string{
 	".json", ".pdf", ".jpg", ".txt",
+}
+
+var allowedFileSuffixesAndContentLegnth = map[string]string{
+	".json": "application/json",
+	".png":  "image/png",
+	".pdf":  "application/pdf",
+	".txt":  "text/plain",
 }
 
 // PrepareFormFile to be sent later with closed multipart and data buffer
@@ -45,8 +53,8 @@ func PrepareFormFile(filename string) (*multipart.Writer, *bytes.Buffer, error) 
 }
 
 // GetAllFilesInDirectory returns a slice of file names (full path)
-func GetAllFilesInDirectory(dir string) ([]string, error) {
-	var fileNames []string
+func GetAllFilesInDirectory(dir string) (map[string]string, error) {
+	fileNames := make(map[string]string)
 	entries, err := os.ReadDir(dir)
 	if err != nil {
 		log.Printf("failed to read directory %s", err)
@@ -55,10 +63,9 @@ func GetAllFilesInDirectory(dir string) ([]string, error) {
 
 	for _, file := range entries {
 		if checkFileSuffix(file.Name()) {
-			fileNames = append(fileNames, path.Join(dir, file.Name()))
+			fileNames[path.Join(dir, file.Name())] = GetFileSuffixContentType(file.Name())
 		}
 	}
-	log.Println("files", fileNames)
 	return fileNames, nil
 }
 
@@ -71,6 +78,16 @@ func getOsFile(file string) (*os.File, error) {
 	}
 
 	return os.Open(path.Join(fileDir, file))
+}
+
+// GetFileSuffixContentType
+func GetFileSuffixContentType(filename string) string {
+	for k, v := range allowedFileSuffixesAndContentLegnth {
+		if strings.HasSuffix(filename, k) {
+			return v
+		}
+	}
+	return "application/octet-stream"
 }
 
 // checkFileSuffix check if file has allowed suffix

@@ -5,7 +5,7 @@ import (
 )
 
 // Files slice of file names inside a directory
-type Files []string
+type Files map[string]string
 
 // Client send files to a server by target url
 type Client struct {
